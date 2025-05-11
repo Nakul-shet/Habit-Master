@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 262.1 83.3% 57.8%;
+    --radius: 0.5rem;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --chart-1: 262.1 83.3% 57.8%;
+    --chart-2: 316.6 73.3% 52.9%;
+    --chart-3: 4.8 90.6% 58.4%;
+    --chart-4: 47.9 95.8% 53.1%;
+    --chart-5: 167.2 68.8% 40.2%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 262.1 83.3% 57.8%;
+    --sidebar: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --chart-1: 262.1 83.3% 57.8%;
+    --chart-2: 316.6 73.3% 52.9%;
+    --chart-3: 4.8 90.6% 58.4%;
+    --chart-4: 47.9 95.8% 53.1%;
+    --chart-5: 167.2 68.8% 40.2%;
+  }
+}
+
+/* Gradient Theme Styles */
+.gradient-theme {
+  /* Keep the same color variables as light theme */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 262.1 83.3% 57.8%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 262.1 83.3% 57.8%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --chart-1: 262.1 83.3% 57.8%;
+  --chart-2: 316.6 73.3% 52.9%;
+  --chart-3: 4.8 90.6% 58.4%;
+  --chart-4: 47.9 95.8% 53.1%;
+  --chart-5: 167.2 68.8% 40.2%;
+}
+
+/* Apply gradient background only to the body */
+.gradient-theme body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background-attachment: fixed;
+}
+
+/* Dark gradient theme */
+.dark.gradient-theme body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  background-attachment: fixed;
+}
+
+/* Make sure components don't inherit the gradient */
+.gradient-theme .card,
+.gradient-theme .bg-card,
+.gradient-theme [class*="bg-card"] {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark.gradient-theme .card,
+.dark.gradient-theme .bg-card,
+.dark.gradient-theme [class*="bg-card"] {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Make sure background elements are transparent */
+.gradient-theme .bg-background {
+  background: transparent !important;
+}
+
+/* Make all modals scrollable with margins */
+.dialog-content {
+  max-height: 85vh;
+  margin: 2.5vh 0;
+  overflow-y: auto;
+}
+
+/* Custom scrollbar for modals */
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 20px;
+}
+
+/* Make all dialog content scrollable with margins */
+.max-h-\[90vh\] {
+  max-height: 90vh;
+}
+
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Global styles for all dialogs */
+[role="dialog"] {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Ensure all dialog content is properly sized */
+[role="dialog"] > div {
+  max-height: 85vh;
+  overflow-y: auto;
+  margin: 2.5vh 0;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
