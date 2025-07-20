@@ -1,11 +1,51 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart, BookOpen, Calendar, Home, Layers, Settings } from "lucide-react"
+import { BarChart, BookOpen, Calendar, Home, Layers, Settings, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
+
+// Live Clock Component
+function LiveClock() {
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000) // Update every minute
+
+    return () => clearInterval(timer)
+  }, [])
+
+  const timeString = currentTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  })
+
+  const dateString = currentTime.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+
+  return (
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Clock className="h-4 w-4" />
+      <div className="hidden sm:flex flex-col">
+        <span className="font-medium">{timeString}</span>
+        <span className="text-xs">{dateString}</span>
+      </div>
+      <div className="sm:hidden">
+        <span className="font-medium">{timeString}</span>
+      </div>
+    </div>
+  )
+}
 
 export function DashboardHeader() {
   const pathname = usePathname()
@@ -48,12 +88,23 @@ export function DashboardHeader() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/dashboard" className="flex items-center space-x-2">
+            <img 
+              src="/brain.png" 
+              alt="Habit Master Logo" 
+              className="h-8 w-8 filter brightness-0 invert"
+            />
             <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-transparent bg-clip-text">
-              HabitHero
+              Habit Master
             </span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+        
+        {/* Live Clock - positioned between logo and navigation */}
+        <div className="flex-1 flex justify-center">
+          <LiveClock />
+        </div>
+        
+        <div className="flex items-center space-x-2">
           <nav className="flex items-center space-x-2">
             {navItems.map((item) => (
               <Button

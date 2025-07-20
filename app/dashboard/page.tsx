@@ -48,9 +48,6 @@ export default function DashboardPage() {
     const todayTaskList = tasks.filter((task) => task.date === today)
     setTodaysTasks(todayTaskList)
 
-    // Calculate completion rates
-    const taskCompletionRate = getCompletionRate(todayTaskList)
-
     // Calculate today's habits
     const todayHabits = habits.map((habit) => {
       const todayEntry = habit.history.find((h) => h.date === today)
@@ -60,14 +57,17 @@ export default function DashboardPage() {
       }
     })
 
-    const habitCompletionRate = (todayHabits.filter((h) => h.completedToday).length / (todayHabits.length || 1)) * 100
+    // Calculate overall completion rate (not average of two separate rates)
+    const totalCompleted = todayTaskList.filter((t) => t.completed).length + todayHabits.filter((h) => h.completedToday).length
+    const totalPossible = todayTaskList.length + todayHabits.length
+    const overallCompletionRate = totalPossible > 0 ? (totalCompleted / totalPossible) * 100 : 0
 
     // Calculate level
     const { level, nextLevelPercentage } = calculateLevel(totalPoints, settings.levelThresholds)
 
     setStats({
       totalPoints,
-      completionRate: (taskCompletionRate + habitCompletionRate) / 2,
+      completionRate: overallCompletionRate,
       pendingTasks: todayTaskList.filter((t) => !t.completed).length,
       completedTasks: todayTaskList.filter((t) => t.completed).length,
       pendingHabits: todayHabits.filter((h) => !h.completedToday).length,
@@ -181,44 +181,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Weekly Progress</CardTitle>
-              <CardDescription>Your habit and task completion over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DashboardChart habits={habits} tasks={tasks} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Projects</CardTitle>
-              <CardDescription>Your ongoing projects</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activeProjects.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">No active projects</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {activeProjects.map((project) => (
-                    <div key={project.id} className="space-y-2">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium">{project.name}</h4>
-                        <span className="text-sm">{project.progress}%</span>
-                      </div>
-                      <Progress value={project.progress} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
         <div className="mt-6">
           <Tabs defaultValue="today">
             <TabsList className="grid w-full grid-cols-3">
@@ -269,6 +231,44 @@ export default function DashboardPage() {
               </Card>
             </TabsContent>
           </Tabs>
+        </div>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Progress</CardTitle>
+              <CardDescription>Daily completion rates and weekly impact score</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DashboardChart habits={habits} tasks={tasks} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Projects</CardTitle>
+              <CardDescription>Your ongoing projects</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activeProjects.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground">No active projects</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {activeProjects.map((project) => (
+                    <div key={project.id} className="space-y-2">
+                      <div className="flex justify-between">
+                        <h4 className="font-medium">{project.name}</h4>
+                        <span className="text-sm">{project.progress}%</span>
+                      </div>
+                      <Progress value={project.progress} className="h-2" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>

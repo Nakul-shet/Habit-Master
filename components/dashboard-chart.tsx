@@ -1,237 +1,201 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { formatDate, getDatesInRange } from "@/lib/utils"
 
+// Local date formatting function to avoid timezone issues
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function DashboardChart({ habits, tasks }) {
-  const [chartData, setChartData] = useState([])
-  const [completionData, setCompletionData] = useState([])
-  const [streakData, setStreakData] = useState([])
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    // Start with the beginning of the current week (Monday)
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const startOfWeek = new Date(now)
+    
+    // If today is Sunday, we want to show the week that includes today
+    // So we go back 6 days to get to Monday of this week
+    if (dayOfWeek === 0) {
+      // Sunday - go back 6 days to get to Monday
+      startOfWeek.setDate(now.getDate() - 6)
+    } else {
+      // Other days - go back to Monday of this week
+      startOfWeek.setDate(now.getDate() - (dayOfWeek - 1))
+    }
+    
+    startOfWeek.setHours(0, 0, 0, 0)
+    return startOfWeek
+  })
 
-  useEffect(() => {
-    // Get dates for the last 7 days
-    const endDate = new Date()
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 6)
+  const [weekData, setWeekData] = useState([])
+  const [aggregateScore, setAggregateScore] = useState(0)
 
-    const dateRange = getDatesInRange(startDate, endDate)
+  // Calculate actual completion data based on habits and tasks
+  const calculateActualData = (weekStart) => {
+    const days = []
+    let totalCompletion = 0
 
-    // Prepare chart data
-    const data = dateRange.map((date) => {
-      const dateStr = formatDate(date)
-
-      // Count completed habits for this date
-      const habitsCompleted = habits.reduce((count, habit) => {
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart)
+      date.setDate(weekStart.getDate() + i)
+      const dateStr = formatLocalDate(date)
+      
+      // Calculate completed habits for this date
+      const completedHabits = habits.reduce((count, habit) => {
         const historyEntry = habit.history.find((h) => h.date === dateStr)
         return count + (historyEntry?.completed ? 1 : 0)
       }, 0)
 
-      // Count completed tasks for this date
-      const tasksCompleted = tasks.filter((task) => task.date === dateStr && task.completed).length
+      // Calculate completed tasks for this date
+      const completedTasks = tasks.filter((task) => task.date === dateStr && task.completed).length
 
-      // Calculate total habits and tasks for completion rate
+      // Calculate total possible completions for this date
       const totalHabits = habits.length
       const totalTasks = tasks.filter((task) => task.date === dateStr).length
+      const totalPossible = totalHabits + totalTasks
 
       // Calculate completion rate
-      const completionRate = ((habitsCompleted + tasksCompleted) / (totalHabits + totalTasks || 1)) * 100
+      const completionRate = totalPossible > 0 ? Math.round(((completedHabits + completedTasks) / totalPossible) * 100) : 0
+      totalCompletion += completionRate
 
-      return {
-        date: date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
-        habitsCompleted,
-        tasksCompleted,
-        completionRate: Math.round(completionRate),
-      }
-    })
-
-    setChartData(data)
-
-    // Prepare completion data for bar chart
-    const totalCompletedHabits = habits.reduce((count, habit) => {
-      return count + habit.history.filter((h) => h.completed).length
-    }, 0)
-
-    const totalCompletedTasks = tasks.filter((task) => task.completed).length
-    const totalPendingTasks = tasks.filter((task) => !task.completed).length
-
-    const totalPendingHabits = habits.reduce((count, habit) => {
-      // Count all possible habit completions minus actual completions
-      const daysTracked = habit.history.length
-      const completedDays = habit.history.filter((h) => h.completed).length
-      return count + (daysTracked - completedDays)
-    }, 0)
-
-    setCompletionData([
-      { name: "Completed Habits", value: totalCompletedHabits },
-      { name: "Completed Tasks", value: totalCompletedTasks },
-      { name: "Pending Tasks", value: totalPendingTasks },
-      { name: "Pending Habits", value: totalPendingHabits },
-    ])
-
-    // Prepare streak data
-    const streaks = habits
-      .map((habit) => {
-        // Sort history by date (newest first)
-        const sortedHistory = [...habit.history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-        // Calculate current streak
-        let currentStreak = 0
-        for (let i = 0; i < sortedHistory.length; i++) {
-          if (sortedHistory[i].completed) {
-            currentStreak++
-          } else {
-            break
-          }
-        }
-
-        return {
-          name: habit.name.length > 15 ? habit.name.substring(0, 15) + "..." : habit.name,
-          streak: currentStreak,
-          color: habit.color,
-        }
+      days.push({
+        date: date,
+        dayName: date.toLocaleDateString("en-US", { weekday: "short" }),
+        completionRate: completionRate,
+        dateStr: dateStr,
+        completedHabits,
+        completedTasks,
+        totalHabits,
+        totalTasks
       })
-      .sort((a, b) => b.streak - a.streak)
-      .slice(0, 5) // Top 5 streaks
-
-    setStreakData(streaks)
-  }, [habits, tasks])
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background p-2 border rounded-md shadow-sm">
-          <p className="font-medium">{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color }}>
-              {entry.name}: {entry.value}
-            </p>
-          ))}
-        </div>
-      )
     }
-    return null
+
+    const averageCompletion = Math.round(totalCompletion / 7)
+    setAggregateScore(averageCompletion)
+
+    return days
+  }
+
+  useEffect(() => {
+    const data = calculateActualData(currentWeekStart)
+    setWeekData(data)
+  }, [currentWeekStart, habits, tasks])
+
+  const navigateWeek = (direction) => {
+    const newWeekStart = new Date(currentWeekStart)
+    if (direction === 'prev') {
+      newWeekStart.setDate(currentWeekStart.getDate() - 7)
+    } else {
+      newWeekStart.setDate(currentWeekStart.getDate() + 7)
+    }
+    setCurrentWeekStart(newWeekStart)
+  }
+
+  const getScoreColor = (score) => {
+    if (score < 50) return "text-red-600"
+    if (score < 75) return "text-yellow-600"
+    return "text-green-600"
+  }
+
+  const getScoreBgColor = (score) => {
+    if (score < 50) return "bg-red-100 dark:bg-red-900/20"
+    if (score < 75) return "bg-yellow-100 dark:bg-yellow-900/20"
+    return "bg-green-100 dark:bg-green-900/20"
+  }
+
+  const formatWeekRange = () => {
+    const endOfWeek = new Date(currentWeekStart)
+    endOfWeek.setDate(currentWeekStart.getDate() + 6)
+    
+    const startStr = currentWeekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    const endStr = endOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    
+    return `${startStr} - ${endStr}`
   }
 
   return (
-    <Tabs defaultValue="activity">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="activity">Activity</TabsTrigger>
-        <TabsTrigger value="completion">Completion</TabsTrigger>
-        <TabsTrigger value="streak">Streaks</TabsTrigger>
-      </TabsList>
+    <div className="space-y-4">
+      {/* Week Navigation */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateWeek('prev')}
+          className="flex items-center gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous Week
+        </Button>
+        
+        <h3 className="font-semibold text-lg">{formatWeekRange()}</h3>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigateWeek('next')}
+          className="flex items-center gap-1"
+        >
+          Next Week
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
 
-      <TabsContent value="activity" className="pt-4">
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart
-            data={chartData}
-            margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 30, // Increased bottom margin to prevent label overlap
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="date"
-              angle={-45} // Angle the labels to prevent overlap
-              textAnchor="end"
-              height={60} // Increase height for angled labels
-              tick={{ fontSize: 12 }} // Smaller font size
-            />
-            <YAxis />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Area
-              type="monotone"
-              dataKey="habitsCompleted"
-              name="Habits Completed"
-              stackId="1"
-              stroke="hsl(var(--chart-1))"
-              fill="hsl(var(--chart-1))"
-              fillOpacity={0.6}
-            />
-            <Area
-              type="monotone"
-              dataKey="tasksCompleted"
-              name="Tasks Completed"
-              stackId="1"
-              stroke="hsl(var(--chart-2))"
-              fill="hsl(var(--chart-2))"
-              fillOpacity={0.6}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </TabsContent>
+      {/* Daily Progress */}
+      <div className="grid grid-cols-7 gap-2">
+        {weekData.map((day, index) => {
+          // Use local date comparison to avoid timezone issues
+          const today = new Date()
+          const todayStr = formatLocalDate(today)
+          const isToday = todayStr === day.dateStr
+          
+                      return (
+              <Card 
+                key={index} 
+                className={`text-center ${isToday ? 'border-2 border-green-500' : ''}`}
+              >
+              <CardContent className="p-3">
+                <div className="text-sm font-medium text-muted-foreground mb-2">
+                  {day.dayName}
+                </div>
+                <div className="text-lg font-bold mb-2">
+                  {day.completionRate}%
+                </div>
+                <Progress 
+                  value={day.completionRate} 
+                  className="h-2"
+                  style={{
+                    '--progress-background': day.completionRate < 50 ? '#ef4444' : 
+                                            day.completionRate < 75 ? '#eab308' : '#22c55e'
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
 
-      <TabsContent value="completion" className="pt-4">
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart
-            data={completionData}
-            layout="vertical"
-            margin={{
-              top: 20,
-              right: 30,
-              left: 120, // Increased left margin for labels
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="value" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </TabsContent>
-
-      <TabsContent value="streak" className="pt-4">
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart
-            data={streakData}
-            layout="vertical"
-            margin={{
-              top: 20,
-              right: 30,
-              left: 100, // Increased left margin for habit names
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" />
-            <YAxis
-              dataKey="name"
-              type="category"
-              width={100}
-              tick={{ fontSize: 12 }} // Smaller font size
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line
-              dataKey="streak"
-              name="Current Streak"
-              stroke="#8884d8"
-              strokeWidth={2}
-              dot={{ stroke: "#8884d8", strokeWidth: 2, r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </TabsContent>
-    </Tabs>
+      {/* Aggregate Score */}
+      <Card className={`${getScoreBgColor(aggregateScore)} border-0`}>
+        <CardContent className="p-4 text-center">
+          <div className="text-sm text-muted-foreground mb-1">Weekly Impact Score</div>
+          <div className={`text-3xl font-bold ${getScoreColor(aggregateScore)}`}>
+            {aggregateScore}%
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            {aggregateScore < 50 ? "Needs improvement" : 
+             aggregateScore < 75 ? "Good progress" : "Excellent performance"}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

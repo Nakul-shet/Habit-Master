@@ -1,13 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronDown, Plus, X, BarChart2, Trash2 } from "lucide-react"
+import { Check, Plus, X, BarChart2, Trash2, Clock } from "lucide-react"
 import { useAppData } from "@/lib/app-data-context"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { HabitForm } from "@/components/habit-form"
 import { formatDate, calculateStreak } from "@/lib/utils"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { HabitStats } from "@/components/habit-stats"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,6 +19,95 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+
+// New component for interactive status icons
+function HabitStatusIcons({ habit, onStatusChange }) {
+  const today = formatDate(new Date())
+  const isToday = habit.date === today
+  const isPast = new Date(habit.date) < new Date(today)
+  const isFuture = new Date(habit.date) > new Date(today)
+
+  const handleStatusClick = (status) => {
+    if (isFuture) return // Don't allow status changes for future dates
+    
+    if (status === "completed") {
+      onStatusChange(habit.id, "completed")
+    } else if (status === "failed") {
+      onStatusChange(habit.id, "failed")
+    }
+  }
+
+  const handleClearStatus = () => {
+    if (isFuture) return
+    onStatusChange(habit.id, "none")
+  }
+
+  // Future date - show pending state
+  if (isFuture) {
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-muted-foreground cursor-not-allowed"
+          disabled
+        >
+          <Clock className="h-4 w-4" />
+        </Button>
+      </div>
+    )
+  }
+
+  // Past or today - show interactive icons
+  return (
+    <div className="flex items-center gap-1">
+      {/* Completed button */}
+      <Button
+        variant={habit.completed ? "default" : "ghost"}
+        size="sm"
+        className={`h-8 w-8 p-0 ${
+          habit.completed 
+            ? "bg-green-500 hover:bg-green-600 text-white" 
+            : "hover:bg-green-50 hover:text-green-600"
+        } ${habit.failed ? "opacity-50 cursor-not-allowed" : ""}`}
+        onClick={() => handleStatusClick("completed")}
+        disabled={habit.failed}
+        title={habit.completed ? "Click to unmark as completed" : "Mark as completed"}
+      >
+        <Check className="h-4 w-4" />
+      </Button>
+
+      {/* Failed button */}
+      <Button
+        variant={habit.failed ? "default" : "ghost"}
+        size="sm"
+        className={`h-8 w-8 p-0 ${
+          habit.failed 
+            ? "bg-red-500 hover:bg-red-600 text-white" 
+            : "hover:bg-red-50 hover:text-red-600"
+        } ${habit.completed ? "opacity-50 cursor-not-allowed" : ""}`}
+        onClick={() => handleStatusClick("failed")}
+        disabled={habit.completed}
+        title={habit.failed ? "Click to unmark as failed" : "Mark as failed"}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+
+      {/* Clear status button - only show if there's a status */}
+      {(habit.completed || habit.failed) && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 text-muted-foreground hover:text-gray-600"
+          onClick={handleClearStatus}
+          title="Clear status"
+        >
+          <span className="text-xs">×</span>
+        </Button>
+      )}
+    </div>
+  )
+}
 
 export function HabitList({ showAddButton = false }) {
   const { habits, toggleHabitCompletion, toggleHabitFailed, deleteHabit } = useAppData()
@@ -36,6 +124,7 @@ export function HabitList({ showAddButton = false }) {
     const streak = calculateStreak(habit.history)
     return {
       ...habit,
+      date: today, // Add date for the status icons component
       completed: todayEntry?.completed || false,
       failed: todayEntry?.failed || false,
       streak,
@@ -118,41 +207,8 @@ export function HabitList({ showAddButton = false }) {
                     <Trash2 className="h-4 w-4" />
                   </Button>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-1">
-                        {habit.completed ? (
-                          <>
-                            <Check className="h-4 w-4 text-green-500" />
-                            <span>Completed</span>
-                          </>
-                        ) : habit.failed ? (
-                          <>
-                            <X className="h-4 w-4 text-red-500" />
-                            <span>Failed</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Not Tracked</span>
-                          </>
-                        )}
-                        <ChevronDown className="h-4 w-4 ml-1" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleStatusChange(habit.id, "completed")}>
-                        <Check className="h-4 w-4 mr-2 text-green-500" />
-                        Mark as Completed
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusChange(habit.id, "failed")}>
-                        <X className="h-4 w-4 mr-2 text-red-500" />
-                        Mark as Failed
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusChange(habit.id, "none")}>
-                        Clear Status
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Replace dropdown with interactive status icons */}
+                  <HabitStatusIcons habit={habit} onStatusChange={handleStatusChange} />
                 </div>
               </div>
             ))}
