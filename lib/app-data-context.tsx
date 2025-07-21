@@ -25,6 +25,7 @@ type Task = {
   name: string
   date: string
   completed: boolean
+  incomplete?: boolean // NEW: mark as incomplete
   remember?: boolean
   color?: string
   categoryId?: string
@@ -151,6 +152,7 @@ type AppDataContextType = {
   updateTask: (id: string, task: Partial<Omit<Task, "id">>) => void
   deleteTask: (id: string) => void
   toggleTaskCompletion: (id: string) => void
+  toggleTaskIncomplete: (id: string) => void // NEW
   addNote: (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => void
   updateNote: (id: string, note: Partial<Omit<Note, "id" | "createdAt" | "updatedAt">>) => void
   deleteNote: (id: string) => void
@@ -677,6 +679,16 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
     )
   }
 
+  const toggleTaskIncomplete = (id: string) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== id) return task
+        // Toggle incomplete state
+        return { ...task, incomplete: !task.incomplete, completed: task.incomplete ? task.completed : false }
+      })
+    )
+  }
+
   // Note functions
   const addNote = (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
     const now = new Date().toISOString()
@@ -1166,6 +1178,7 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
         updateTask,
         deleteTask,
         toggleTaskCompletion,
+        toggleTaskIncomplete, // NEW
         addNote,
         updateNote,
         deleteNote,

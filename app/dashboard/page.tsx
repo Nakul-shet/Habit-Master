@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Calendar, CheckCircle, Clock, FileText, Star, Trophy } from "lucide-react"
+import { Calendar, CheckCircle, Clock, FileText, Star, Trophy, AlertCircle } from "lucide-react"
 import { useAppData } from "@/lib/app-data-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -76,6 +76,12 @@ export default function DashboardPage() {
       nextLevel: nextLevelPercentage,
     })
   }, [habits, tasks, settings])
+
+  // Calculate negative percentage (all time)
+  const incompleteTasks = tasks.filter((t) => t.incomplete).length
+  const failedHabits = habits.reduce((acc, habit) => acc + habit.history.filter((h) => h.failed).length, 0)
+  const negativeCount = incompleteTasks + failedHabits
+  let negativePercent = Math.min(negativeCount * 2, 100)
 
   // Get the badge name for display
   const getBadgeName = () => {
@@ -193,7 +199,6 @@ export default function DashboardPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Star className="h-5 w-5 text-amber-500" />
-                    Today's Tasks
                   </CardTitle>
                   <CardDescription>Complete tasks to earn {settings.pointsPerTask} points each</CardDescription>
                 </CardHeader>
@@ -201,6 +206,58 @@ export default function DashboardPage() {
                   <TaskList tasks={todaysTasks} showAddButton />
                 </CardContent>
               </Card>
+              {/* Negative Progress Bar - its own box after TaskList card */}
+              <div className="w-full mt-4 rounded-lg shadow p-4 bg-card dark:bg-black">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2 font-semibold"
+                    style={{
+                      color: negativePercent === 0
+                        ? '#059669' // green-600
+                        : negativePercent <= 10
+                        ? '#ca8a04' // yellow-600
+                        : negativePercent <= 50
+                        ? '#ea580c' // orange-600
+                        : '#b91c1c', // red-700
+                    }}
+                  >
+                    <AlertCircle className="h-5 w-5" />
+                    Negative Progress
+                  </div>
+                  <span className="text-xl font-bold"
+                    style={{
+                      color: negativePercent === 0
+                        ? '#059669'
+                        : negativePercent <= 10
+                        ? '#ca8a04'
+                        : negativePercent <= 50
+                        ? '#ea580c'
+                        : '#b91c1c',
+                    }}
+                  >
+                    -{negativePercent}%
+                  </span>
+                </div>
+                <Progress value={negativePercent} max={100} className="h-2"
+                  style={{
+                    background: '#e5e7eb', // gray-200 for track
+                    '--tw-bg-opacity': 1,
+                  }}
+                  barStyle={{
+                    background: negativePercent === 0
+                      ? '#059669' // green-600
+                      : negativePercent <= 10
+                      ? '#ca8a04' // yellow-600
+                      : negativePercent <= 50
+                      ? '#ea580c' // orange-600
+                      : '#b91c1c', // red-700
+                  }}
+                />
+                {negativePercent === 100 && (
+                  <div className="mt-1 text-center text-sm font-semibold text-yellow-700 dark:text-yellow-200">
+                    Serious warning: Self improvement needed!
+                  </div>
+                )}
+              </div>
             </TabsContent>
             <TabsContent value="habits" className="mt-4">
               <Card>

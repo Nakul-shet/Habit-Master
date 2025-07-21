@@ -33,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge"
 
 export function TaskList({ tasks = [], showAddButton = false }) {
-  const { toggleTaskCompletion, deleteTask, updateTask, taskCategories, getTaskCategory } = useAppData()
+  const { toggleTaskCompletion, toggleTaskIncomplete, deleteTask, updateTask, taskCategories, getTaskCategory } = useAppData()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editTask, setEditTask] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -48,6 +48,10 @@ export function TaskList({ tasks = [], showAddButton = false }) {
 
   const handleToggleCompletion = (taskId) => {
     toggleTaskCompletion(taskId)
+  }
+
+  const handleToggleIncomplete = (taskId) => {
+    toggleTaskIncomplete(taskId)
   }
 
   const handleEdit = (task) => {
@@ -258,9 +262,21 @@ export function TaskList({ tasks = [], showAddButton = false }) {
                   >
                     {task.completed ? (
                       <CheckCircle className="h-6 w-6 text-green-500" />
+                    ) : task.incomplete ? (
+                      <Circle className="h-6 w-6 text-red-500" />
                     ) : (
                       <Circle className="h-6 w-6 text-muted-foreground" />
                     )}
+                  </Button>
+                  {/* Incomplete toggle button */}
+                  <Button
+                    variant={task.incomplete ? "default" : "ghost"}
+                    size="icon"
+                    className={`rounded-full h-8 w-8 ${task.incomplete ? "bg-red-500 hover:bg-red-600 text-white" : "hover:bg-red-50 hover:text-red-600"}`}
+                    onClick={() => handleToggleIncomplete(task.id)}
+                    title={task.incomplete ? "Mark as not incomplete" : "Mark as incomplete"}
+                  >
+                    <span className="text-lg font-bold">-2%</span>
                   </Button>
                   <div>
                     <div className="flex items-center gap-2">
