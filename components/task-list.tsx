@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { CheckCircle, Circle, Edit, Plus, Calendar, ArrowRight, Filter, SortAsc, SortDesc } from "lucide-react"
+import { CheckCircle, Circle, Edit, Plus, Calendar, ArrowRight, Filter, SortAsc, SortDesc, X } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 import { useAppData } from "@/lib/app-data-context"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge"
 
 export function TaskList({ tasks = [], showAddButton = false }) {
-  const { toggleTaskCompletion, toggleTaskIncomplete, deleteTask, updateTask, taskCategories, getTaskCategory } = useAppData()
+  const { toggleTaskCompletion, toggleTaskIncomplete, toggleTaskFailed, deleteTask, updateTask, taskCategories, getTaskCategory } = useAppData()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editTask, setEditTask] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -45,9 +45,18 @@ export function TaskList({ tasks = [], showAddButton = false }) {
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [sortBy, setSortBy] = useState("date")
   const [sortDirection, setSortDirection] = useState("asc")
+  const [failConfirmOpen, setFailConfirmOpen] = useState(false)
+  const [failSwitchTask, setFailSwitchTask] = useState(null)
+  const [failSwitchTarget, setFailSwitchTarget] = useState(null) // 'completed' or 'failed'
 
-  const handleToggleCompletion = (taskId) => {
-    toggleTaskCompletion(taskId)
+  const handleToggleCompletion = (task) => {
+    if (task.failed) {
+      setFailSwitchTask(task)
+      setFailSwitchTarget('completed')
+      setFailConfirmOpen(true)
+      return
+    }
+    toggleTaskCompletion(task.id)
   }
 
   const handleToggleIncomplete = (taskId) => {
@@ -67,6 +76,16 @@ export function TaskList({ tasks = [], showAddButton = false }) {
     setTaskToMove(task)
     setSelectedDate(new Date(task.date))
     setMoveDialogOpen(true)
+  }
+
+  const handleToggleFailed = (task) => {
+    if (task.completed) {
+      setFailSwitchTask(task)
+      setFailSwitchTarget('failed')
+      setFailConfirmOpen(true)
+      return
+    }
+    toggleTaskFailed(task.id)
   }
 
   const confirmDelete = () => {
@@ -104,6 +123,21 @@ export function TaskList({ tasks = [], showAddButton = false }) {
     const newDate = addDays(new Date(task.date), days)
     const formattedDate = formatDate(newDate)
     updateTask(task.id, { ...task, date: formattedDate })
+  }
+
+  const confirmFailSwitch = () => {
+    if (failSwitchTask && failSwitchTarget) {
+      if (failSwitchTarget === 'completed') {
+        toggleTaskFailed(failSwitchTask.id) // Unfail first
+        toggleTaskCompletion(failSwitchTask.id)
+      } else if (failSwitchTarget === 'failed') {
+        toggleTaskCompletion(failSwitchTask.id) // Uncomplete first
+        toggleTaskFailed(failSwitchTask.id)
+      }
+    }
+    setFailConfirmOpen(false)
+    setFailSwitchTask(null)
+    setFailSwitchTarget(null)
   }
 
   // Filter and sort tasks
@@ -251,33 +285,37 @@ export function TaskList({ tasks = [], showAddButton = false }) {
               <div
                 key={task.id}
                 className="flex items-center justify-between p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-                style={{ borderLeft: `4px solid ${task.color || (task.completed ? "#10b981" : "#f43f5e")}` }}
+                style={{ borderLeft: `4px solid ${task.color || (task.completed ? "#10b981" : task.failed ? "#6b7280" : "#f43f5e")}` }}
               >
                 <div className="flex items-center gap-3">
                   <Button
                     variant="ghost"
                     size="icon"
                     className="rounded-full h-8 w-8"
-                    onClick={() => handleToggleCompletion(task.id)}
+                    onClick={() => handleToggleCompletion(task)}
+                    disabled={task.failed}
                   >
                     {task.completed ? (
                       <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : task.incomplete ? (
-                      <Circle className="h-6 w-6 text-red-500" />
+                    ) : task.failed ? (
+                      <Circle className="h-6 w-6 text-gray-400" />
                     ) : (
                       <Circle className="h-6 w-6 text-muted-foreground" />
                     )}
                   </Button>
-                  {/* Incomplete toggle button */}
+                  {/* Failed toggle button */}
                   <Button
-                    variant={task.incomplete ? "default" : "ghost"}
+                    variant={task.failed ? "default" : "ghost"}
                     size="icon"
-                    className={`rounded-full h-8 w-8 ${task.incomplete ? "bg-red-500 hover:bg-red-600 text-white" : "hover:bg-red-50 hover:text-red-600"}`}
-                    onClick={() => handleToggleIncomplete(task.id)}
-                    title={task.incomplete ? "Mark as not incomplete" : "Mark as incomplete"}
+                    className={`rounded-full h-8 w-8 ${task.failed ? "bg-red-500 hover:bg-red-600 text-white" : "hover:bg-red-50 hover:text-red-600"}`}
+                    onClick={() => handleToggleFailed(task)}
+                    title={task.failed ? "Marked as failed" : "Mark as failed"}
+                    disabled={task.completed}
                   >
-                    <span className="text-lg font-bold">-2%</span>
+                    <X className="h-5 w-5" />
                   </Button>
+                  {/* Optionally, you can keep the incomplete toggle if needed, or remove it if only failed/completed are allowed */}
+                  {/* <Button ... /> */}
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className={`font-medium ${task.completed ? "line-through text-muted-foreground" : ""}`}>
@@ -437,6 +475,25 @@ export function TaskList({ tasks = [], showAddButton = false }) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={failConfirmOpen} onOpenChange={setFailConfirmOpen}>
+        <AlertDialogContent className="max-h-[90vh] overflow-y-auto my-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {failSwitchTarget === 'completed'
+                ? 'This task is currently marked as failed. Do you want to mark it as completed instead?'
+                : 'This task is currently marked as completed. Do you want to mark it as failed instead?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setFailConfirmOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmFailSwitch} className="bg-gray-600 hover:bg-gray-700">
+              Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

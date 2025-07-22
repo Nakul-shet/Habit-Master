@@ -79,8 +79,9 @@ export default function DashboardPage() {
 
   // Calculate negative percentage (all time)
   const incompleteTasks = tasks.filter((t) => t.incomplete).length
+  const failedTasks = tasks.filter((t) => t.failed).length
   const failedHabits = habits.reduce((acc, habit) => acc + habit.history.filter((h) => h.failed).length, 0)
-  const negativeCount = incompleteTasks + failedHabits
+  const negativeCount = incompleteTasks + failedTasks + failedHabits
   let negativePercent = Math.min(negativeCount * 2, 100)
 
   // Get the badge name for display
@@ -241,15 +242,6 @@ export default function DashboardPage() {
                   style={{
                     background: '#e5e7eb', // gray-200 for track
                     '--tw-bg-opacity': 1,
-                  }}
-                  barStyle={{
-                    background: negativePercent === 0
-                      ? '#059669' // green-600
-                      : negativePercent <= 10
-                      ? '#ca8a04' // yellow-600
-                      : negativePercent <= 50
-                      ? '#ea580c' // orange-600
-                      : '#b91c1c', // red-700
                   }}
                 />
                 {negativePercent === 100 && (

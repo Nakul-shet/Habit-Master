@@ -171,11 +171,7 @@ export function DashboardChart({ habits, tasks }) {
                 </div>
                 <Progress 
                   value={day.completionRate} 
-                  className="h-2"
-                  style={{
-                    '--progress-background': day.completionRate < 50 ? '#ef4444' : 
-                                            day.completionRate < 75 ? '#eab308' : '#22c55e'
-                  }}
+                  className={`h-2 ${day.completionRate < 50 ? 'bg-red-200' : day.completionRate < 75 ? 'bg-yellow-200' : 'bg-green-200'}`}
                 />
               </CardContent>
             </Card>

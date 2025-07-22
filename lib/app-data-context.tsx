@@ -26,6 +26,7 @@ type Task = {
   date: string
   completed: boolean
   incomplete?: boolean // NEW: mark as incomplete
+  failed?: boolean // NEW: mark as failed
   remember?: boolean
   color?: string
   categoryId?: string
@@ -153,6 +154,7 @@ type AppDataContextType = {
   deleteTask: (id: string) => void
   toggleTaskCompletion: (id: string) => void
   toggleTaskIncomplete: (id: string) => void // NEW
+  toggleTaskFailed: (id: string) => void // NEW
   addNote: (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => void
   updateNote: (id: string, note: Partial<Omit<Note, "id" | "createdAt" | "updatedAt">>) => void
   deleteNote: (id: string) => void
@@ -333,6 +335,11 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
       return total + (task.completed ? settings.pointsPerTask : 0)
     }, 0)
 
+    // Subtract 2 points for each failed task
+    const failedTaskPenalty = tasks.reduce((total, task) => {
+      return total + (task.failed ? 2 : 0)
+    }, 0)
+
     // Calculate project stage points
     const projectPoints = projects.reduce((total, project) => {
       const stagePoints = project.stages.reduce((stageTotal, stage) => {
@@ -346,7 +353,7 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
       return total + project.totalPoints
     }, 0)
 
-    const totalPoints = habitPoints + taskPoints + projectPoints + completedProjectPoints
+    const totalPoints = habitPoints + taskPoints + projectPoints + completedProjectPoints - failedTaskPenalty
 
     // Calculate badge
     const newBadge = calculateBadge(totalPoints)
@@ -685,6 +692,22 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
         if (task.id !== id) return task
         // Toggle incomplete state
         return { ...task, incomplete: !task.incomplete, completed: task.incomplete ? task.completed : false }
+      })
+    )
+  }
+
+  const toggleTaskFailed = (id: string) => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== id) return task
+        // Toggle failed state, and ensure only one of completed/incomplete/failed is true
+        const newFailedState = !task.failed
+        return {
+          ...task,
+          failed: newFailedState,
+          completed: newFailedState ? false : task.completed,
+          incomplete: newFailedState ? false : task.incomplete,
+        }
       })
     )
   }
@@ -1179,6 +1202,7 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
         deleteTask,
         toggleTaskCompletion,
         toggleTaskIncomplete, // NEW
+        toggleTaskFailed, // NEW
         addNote,
         updateNote,
         deleteNote,
