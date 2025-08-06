@@ -130,63 +130,104 @@ export function DashboardChart({ habits, tasks }) {
           variant="outline"
           size="sm"
           onClick={() => navigateWeek('prev')}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 text-xs sm:text-sm"
         >
-          <ChevronLeft className="h-4 w-4" />
-          Previous Week
+          <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Previous Week</span>
+          <span className="sm:hidden">Prev</span>
         </Button>
         
-        <h3 className="font-semibold text-lg">{formatWeekRange()}</h3>
+        <h3 className="font-semibold text-sm sm:text-lg text-center flex-1 mx-2">{formatWeekRange()}</h3>
         
         <Button
           variant="outline"
           size="sm"
           onClick={() => navigateWeek('next')}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 text-xs sm:text-sm"
         >
-          Next Week
-          <ChevronRight className="h-4 w-4" />
+          <span className="hidden sm:inline">Next Week</span>
+          <span className="sm:hidden">Next</span>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
         </Button>
       </div>
 
-      {/* Daily Progress */}
-      <div className="grid grid-cols-7 gap-2">
-        {weekData.map((day, index) => {
-          // Use local date comparison to avoid timezone issues
-          const today = new Date()
-          const todayStr = formatLocalDate(today)
-          const isToday = todayStr === day.dateStr
-          
-                      return (
+      {/* Daily Progress - Mobile Horizontal Scroll */}
+      <div className="relative">
+        {/* Desktop Grid */}
+        <div className="hidden md:grid md:grid-cols-7 md:gap-2">
+          {weekData.map((day, index) => {
+            // Use local date comparison to avoid timezone issues
+            const today = new Date()
+            const todayStr = formatLocalDate(today)
+            const isToday = todayStr === day.dateStr
+            
+            return (
               <Card 
                 key={index} 
-                className={`text-center ${isToday ? 'border-2 border-green-500' : ''}`}
+                className={`text-center ${isToday ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20' : ''}`}
               >
-              <CardContent className="p-3">
-                <div className="text-sm font-medium text-muted-foreground mb-2">
-                  {day.dayName}
-                </div>
-                <div className="text-lg font-bold mb-2">
-                  {day.completionRate}%
-                </div>
-                <Progress 
-                  value={day.completionRate} 
-                  className={`h-2 ${day.completionRate < 50 ? 'bg-red-200' : day.completionRate < 75 ? 'bg-yellow-200' : 'bg-green-200'}`}
-                />
-              </CardContent>
-            </Card>
-          )
-        })}
+                <CardContent className="p-3">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    {day.dayName}
+                  </div>
+                  <div className="text-lg font-bold mb-2">
+                    {day.completionRate}%
+                  </div>
+                  <Progress 
+                    value={day.completionRate} 
+                    className={`h-2 ${day.completionRate < 50 ? 'bg-red-200' : day.completionRate < 75 ? 'bg-yellow-200' : 'bg-green-200'}`}
+                  />
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {/* Mobile Horizontal Scroll */}
+        <div className="md:hidden">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {weekData.map((day, index) => {
+              // Use local date comparison to avoid timezone issues
+              const today = new Date()
+              const todayStr = formatLocalDate(today)
+              const isToday = todayStr === day.dateStr
+              
+              return (
+                <Card 
+                  key={index} 
+                  className={`text-center min-w-[120px] flex-shrink-0 ${isToday ? 'border-2 border-green-500 bg-green-50 dark:bg-green-900/20' : ''}`}
+                >
+                  <CardContent className="p-3">
+                    <div className="text-xs font-medium text-muted-foreground mb-1">
+                      {day.dayName}
+                    </div>
+                    <div className="text-base font-bold mb-1">
+                      {day.completionRate}%
+                    </div>
+                    <Progress 
+                      value={day.completionRate} 
+                      className={`h-1.5 ${day.completionRate < 50 ? 'bg-red-200' : day.completionRate < 75 ? 'bg-yellow-200' : 'bg-green-200'}`}
+                    />
+                    {/* Show date on mobile for better context */}
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {day.date.getDate()}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Aggregate Score */}
       <Card className={`${getScoreBgColor(aggregateScore)} border-0`}>
-        <CardContent className="p-4 text-center">
-          <div className="text-sm text-muted-foreground mb-1">Weekly Impact Score</div>
-          <div className={`text-3xl font-bold ${getScoreColor(aggregateScore)}`}>
+        <CardContent className="p-3 sm:p-4 text-center">
+          <div className="text-xs sm:text-sm text-muted-foreground mb-1">Weekly Impact Score</div>
+          <div className={`text-2xl sm:text-3xl font-bold ${getScoreColor(aggregateScore)}`}>
             {aggregateScore}%
           </div>
-          <div className="text-sm text-muted-foreground mt-1">
+          <div className="text-xs sm:text-sm text-muted-foreground mt-1">
             {aggregateScore < 50 ? "Needs improvement" : 
              aggregateScore < 75 ? "Good progress" : "Excellent performance"}
           </div>
