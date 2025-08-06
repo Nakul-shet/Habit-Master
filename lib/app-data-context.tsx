@@ -31,6 +31,7 @@ type Task = {
   color?: string
   categoryId?: string
   priority?: "low" | "medium" | "high"
+  customPoints?: number // NEW: custom points for this task
 }
 
 type Note = {
@@ -209,6 +210,7 @@ type AppDataContextType = {
   updateTaskCategory: (id: string, category: Partial<Omit<TaskCategory, "id">>) => void
   deleteTaskCategory: (id: string) => void
   getTaskCategory: (id: string) => TaskCategory | undefined
+  clearAllData: () => void
 }
 
 // Create context
@@ -1181,6 +1183,26 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
     })
   }
 
+  const clearAllData = () => {
+    // Clear all data and reset to defaults
+    setHabits([])
+    setTasks([])
+    setNotes([])
+    setProjects([])
+    setCompletedProjects([])
+    setSettings(defaultSettings)
+    setTaskCategories(defaultTaskCategories)
+    
+    // Clear localStorage
+    localStorage.removeItem('habits')
+    localStorage.removeItem('tasks')
+    localStorage.removeItem('notes')
+    localStorage.removeItem('projects')
+    localStorage.removeItem('completedProjects')
+    localStorage.removeItem('settings')
+    localStorage.removeItem('taskCategories')
+  }
+
   return (
     <AppDataContext.Provider
       value={{
@@ -1234,6 +1256,7 @@ export function AppDataProvider({ children, initialTheme = "light" }) {
         updateTaskCategory,
         deleteTaskCategory,
         getTaskCategory,
+        clearAllData,
       }}
     >
       {children}

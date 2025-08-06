@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { Palette, Settings, Sun, Moon } from "lucide-react"
+import { Palette, Settings, Sun, Moon, Trash2, AlertTriangle } from "lucide-react"
 import { useAppData } from "@/lib/app-data-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +15,17 @@ import { toast } from "@/components/ui/use-toast"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { BadgeIcon } from "@/components/badge-icon"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const settingsSchema = z.object({
   pointsPerHabit: z.number().min(1).max(100),
@@ -53,7 +64,7 @@ const gradientOptions = [
 ]
 
 export default function SettingsPage() {
-  const { settings, updateSettings, badge, calculateBadge } = useAppData()
+  const { settings, updateSettings, badge, calculateBadge, clearAllData } = useAppData()
 
   const form = useForm({
     resolver: zodResolver(settingsSchema),
@@ -89,6 +100,14 @@ export default function SettingsPage() {
     toast({
       title: "Settings updated",
       description: "Your settings have been saved successfully.",
+    })
+  }
+
+  const handleClearData = () => {
+    clearAllData()
+    toast({
+      title: "Data cleared",
+      description: "All application data has been cleared successfully.",
     })
   }
 
@@ -412,48 +431,111 @@ export default function SettingsPage() {
             </Form>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Palette className="mr-2 h-5 w-5" />
-                Badge Progression
-              </CardTitle>
-              <CardDescription>Earn points to unlock new badges</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {allBadges.map((badgeRank) => {
-                  const isCurrentBadge = badgeRank === badge
-                  const pointsNeeded = getPointsForBadge(badgeRank)
-                  const isUnlocked = pointsNeeded <= getPointsForBadge(badge)
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Palette className="mr-2 h-5 w-5" />
+                  Badge Progression
+                </CardTitle>
+                <CardDescription>Earn points to unlock new badges</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {allBadges.map((badgeRank) => {
+                    const isCurrentBadge = badgeRank === badge
+                    const pointsNeeded = getPointsForBadge(badgeRank)
+                    const isUnlocked = pointsNeeded <= getPointsForBadge(badge)
 
-                  return (
-                    <div
-                      key={badgeRank}
-                      className={`flex flex-col items-center p-3 rounded-lg border ${
-                        isCurrentBadge
-                          ? "border-primary bg-primary/10"
-                          : isUnlocked
-                            ? "border-muted-foreground/30"
-                            : "border-muted opacity-50"
-                      }`}
-                    >
-                      <BadgeIcon rank={badgeRank} size={40} />
-                      <div className="mt-2 text-center">
-                        <div className="text-sm font-medium">{getBadgeName(badgeRank)}</div>
-                        <div className="text-xs text-muted-foreground">{pointsNeeded} points</div>
+                    return (
+                      <div
+                        key={badgeRank}
+                        className={`flex flex-col items-center p-3 rounded-lg border ${
+                          isCurrentBadge
+                            ? "border-primary bg-primary/10"
+                            : isUnlocked
+                              ? "border-muted-foreground/30"
+                              : "border-muted opacity-50"
+                        }`}
+                      >
+                        <BadgeIcon rank={badgeRank} size={40} />
+                        <div className="mt-2 text-center">
+                          <div className="text-sm font-medium">{getBadgeName(badgeRank)}</div>
+                          <div className="text-xs text-muted-foreground">{pointsNeeded} points</div>
+                        </div>
                       </div>
+                    )
+                  })}
+                </div>
+                <div className="mt-6">
+                  <p className="text-sm text-muted-foreground">
+                    Your current badge: <span className="font-medium">{getBadgeName(badge)}</span>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Clear Data Section */}
+            <Card className="border-destructive/20">
+              <CardHeader>
+                <CardTitle className="flex items-center text-destructive">
+                  <Trash2 className="mr-2 h-5 w-5" />
+                  Clear Data
+                </CardTitle>
+                <CardDescription>Permanently delete all your data from the application</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3 p-4 bg-destructive/5 rounded-lg border border-destructive/20">
+                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-destructive mb-1">Warning</p>
+                      <p className="text-muted-foreground">
+                        This action will permanently delete all your habits, tasks, notes, projects, and settings. 
+                        This action cannot be undone.
+                      </p>
                     </div>
-                  )
-                })}
-              </div>
-              <div className="mt-6">
-                <p className="text-sm text-muted-foreground">
-                  Your current badge: <span className="font-medium">{getBadgeName(badge)}</span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Clear All Data
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will permanently delete all your data including:
+                          <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>All habits and their completion history</li>
+                            <li>All tasks and their status</li>
+                            <li>All notes and projects</li>
+                            <li>All settings and preferences</li>
+                            <li>All progress and points earned</li>
+                          </ul>
+                          <p className="mt-3 font-medium text-destructive">
+                            This action cannot be undone.
+                          </p>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleClearData}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Yes, Clear All Data
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>

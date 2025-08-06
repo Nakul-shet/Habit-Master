@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { format } from "date-fns"
-import { CalendarIcon, Plus } from "lucide-react"
+import { CalendarIcon, Plus, Coins } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 import { useAppData } from "@/lib/app-data-context"
 import { Button } from "@/components/ui/button"
@@ -33,15 +33,17 @@ const taskSchema = z.object({
   color: z.string().default("#f43f5e"),
   categoryId: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]).default("medium"),
+  customPoints: z.number().min(1).max(100).optional(),
 })
 
 export function TaskForm({ task, onSuccess }) {
-  const { addTask, updateTask, taskCategories, addTaskCategory } = useAppData()
+  const { addTask, updateTask, taskCategories, addTaskCategory, settings } = useAppData()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCategoryDialog, setShowCategoryDialog] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
   const [newCategoryIcon, setNewCategoryIcon] = useState("Bookmark")
   const [newCategoryColor, setNewCategoryColor] = useState("#3b82f6")
+  const [useCustomPoints, setUseCustomPoints] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(taskSchema),
@@ -52,8 +54,12 @@ export function TaskForm({ task, onSuccess }) {
       color: task?.color || "#f43f5e",
       categoryId: task?.categoryId || "",
       priority: task?.priority || "medium",
+      customPoints: task?.customPoints || settings.pointsPerTask,
     },
   })
+
+  // Watch custom points to show/hide the field
+  const watchCustomPoints = form.watch("customPoints")
 
   function onSubmit(data) {
     setIsSubmitting(true)
@@ -62,20 +68,22 @@ export function TaskForm({ task, onSuccess }) {
       // Format date to YYYY-MM-DD
       const formattedDate = formatDate(data.date)
 
+      // Prepare task data
+      const taskData = {
+        ...data,
+        date: formattedDate,
+        // Only include customPoints if user has set custom points
+        ...(useCustomPoints && { customPoints: data.customPoints }),
+      }
+
       if (task) {
-        updateTask(task.id, {
-          ...data,
-          date: formattedDate,
-        })
+        updateTask(task.id, taskData)
         toast({
           title: "Task updated",
           description: "Your task has been updated successfully.",
         })
       } else {
-        addTask({
-          ...data,
-          date: formattedDate,
-        })
+        addTask(taskData)
         toast({
           title: "Task created",
           description: "Your new task has been created successfully.",
@@ -165,10 +173,16 @@ export function TaskForm({ task, onSuccess }) {
                   </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  <Calendar 
+                    mode="single" 
+                    selected={field.value} 
+                    onSelect={field.onChange} 
+                    initialFocus
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  />
                 </PopoverContent>
               </Popover>
-              <FormDescription>When do you need to complete this task?</FormDescription>
+              <FormDescription>When do you need to complete this task? (You can select future dates)</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -251,6 +265,60 @@ export function TaskForm({ task, onSuccess }) {
             </FormItem>
           )}
         />
+
+        {/* Custom Points Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <FormLabel>Points</FormLabel>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="useCustomPoints"
+                checked={useCustomPoints}
+                onCheckedChange={setUseCustomPoints}
+              />
+              <label htmlFor="useCustomPoints" className="text-sm text-muted-foreground">
+                Use custom points
+              </label>
+            </div>
+          </div>
+
+          {useCustomPoints ? (
+            <FormField
+              control={form.control}
+              name="customPoints"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex items-center space-x-2">
+                      <Coins className="h-4 w-4 text-amber-500" />
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        placeholder={`Default: ${settings.pointsPerTask}`}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="flex-1"
+                      />
+                      <span className="text-sm text-muted-foreground">points</span>
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Custom points for this task. Default is {settings.pointsPerTask} points.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
+              <Coins className="h-4 w-4 text-amber-500" />
+              <span className="text-sm text-muted-foreground">
+                Default points: {settings.pointsPerTask} points
+              </span>
+            </div>
+          )}
+        </div>
 
         <FormField
           control={form.control}

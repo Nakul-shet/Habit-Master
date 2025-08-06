@@ -36,7 +36,9 @@ export default function DashboardPage() {
     }, 0)
 
     const taskPoints = tasks.reduce((total, task) => {
-      return total + (task.completed ? settings.pointsPerTask : 0)
+      // Use custom points if available, otherwise use default points
+      const pointsForTask = task.completed ? (task.customPoints || settings.pointsPerTask) : 0
+      return total + pointsForTask
     }, 0)
 
     const totalPoints = habitPoints + taskPoints
@@ -46,7 +48,7 @@ export default function DashboardPage() {
 
     // Filter today's tasks
     const todayTaskList = tasks.filter((task) => task.date === today)
-    setTodaysTasks(todayTaskList)
+    setTodaysTasks(todayTaskList as never[])
 
     // Calculate today's habits
     const todayHabits = habits.map((habit) => {
@@ -248,7 +250,6 @@ export default function DashboardPage() {
                 <Progress value={negativePercent} max={100} className="h-2"
                   style={{
                     background: '#e5e7eb', // gray-200 for track
-                    '--tw-bg-opacity': 1,
                   }}
                 />
                 {negativePercent === 100 && (
