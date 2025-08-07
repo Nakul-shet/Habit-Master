@@ -32,8 +32,8 @@ import { formatDate } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Badge } from "@/components/ui/badge"
 
-export function TaskList({ tasks = [], showAddButton = false }) {
-  const { toggleTaskCompletion, toggleTaskIncomplete, toggleTaskFailed, deleteTask, updateTask, taskCategories, getTaskCategory } = useAppData()
+export function TaskList({ tasks = [], showAddButton = false, compactView = false }) {
+  const { toggleTaskCompletion, toggleTaskIncomplete, toggleTaskFailed, deleteTask, updateTask, taskCategories, getTaskCategory, settings } = useAppData()
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editTask, setEditTask] = useState(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -48,6 +48,7 @@ export function TaskList({ tasks = [], showAddButton = false }) {
   const [failConfirmOpen, setFailConfirmOpen] = useState(false)
   const [failSwitchTask, setFailSwitchTask] = useState(null)
   const [failSwitchTarget, setFailSwitchTarget] = useState(null) // 'completed' or 'failed'
+  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false)
 
   const handleToggleCompletion = (task) => {
     if (task.failed) {
@@ -140,6 +141,16 @@ export function TaskList({ tasks = [], showAddButton = false }) {
     setFailSwitchTarget(null)
   }
 
+  const clearAllCompletedTasks = () => {
+    // Delete all completed tasks from the current list
+    tasks.forEach(task => {
+      if (task.completed) {
+        deleteTask(task.id)
+      }
+    })
+    setClearAllDialogOpen(false)
+  }
+
   // Filter and sort tasks
   const filteredAndSortedTasks = useMemo(() => {
     // First, filter tasks
@@ -151,6 +162,11 @@ export function TaskList({ tasks = [], showAddButton = false }) {
 
     if (priorityFilter !== "all") {
       result = result.filter((task) => task.priority === priorityFilter)
+    }
+
+    // For compact view, only show completed tasks
+    if (compactView) {
+      result = result.filter((task) => task.completed)
     }
 
     // Then, sort tasks
@@ -170,7 +186,7 @@ export function TaskList({ tasks = [], showAddButton = false }) {
     })
 
     return result
-  }, [tasks, categoryFilter, priorityFilter, sortBy, sortDirection])
+  }, [tasks, categoryFilter, priorityFilter, sortBy, sortDirection, compactView])
 
   // Get priority badge color
   const getPriorityColor = (priority) => {
@@ -190,82 +206,101 @@ export function TaskList({ tasks = [], showAddButton = false }) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                <Filter className="h-4 w-4" />
-                <span>Filter</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
-                <DropdownMenuItem className="font-semibold">Category</DropdownMenuItem>
-                <DropdownMenuRadioItem value="all">All Categories</DropdownMenuRadioItem>
-                {taskCategories.map((category) => {
-                  const IconComponent = LucideIcons[category.icon] || LucideIcons.Bookmark
-                  return (
-                    <DropdownMenuRadioItem key={category.id} value={category.id}>
-                      <div className="flex items-center gap-2">
-                        <IconComponent size={16} style={{ color: category.color }} />
-                        <span>{category.name}</span>
-                      </div>
-                    </DropdownMenuRadioItem>
-                  )
-                })}
-              </DropdownMenuRadioGroup>
+          {!compactView && (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Filter className="h-4 w-4" />
+                    <span>Filter</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuRadioGroup value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <DropdownMenuItem className="font-semibold">Category</DropdownMenuItem>
+                    <DropdownMenuRadioItem value="all">All Categories</DropdownMenuRadioItem>
+                    {taskCategories.map((category) => {
+                      const IconComponent = LucideIcons[category.icon] || LucideIcons.Bookmark
+                      return (
+                        <DropdownMenuRadioItem key={category.id} value={category.id}>
+                          <div className="flex items-center gap-2">
+                            <IconComponent size={16} style={{ color: category.color }} />
+                            <span>{category.name}</span>
+                          </div>
+                        </DropdownMenuRadioItem>
+                      )
+                    })}
+                  </DropdownMenuRadioGroup>
 
-              <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
 
-              <DropdownMenuRadioGroup value={priorityFilter} onValueChange={setPriorityFilter}>
-                <DropdownMenuItem className="font-semibold">Priority</DropdownMenuItem>
-                <DropdownMenuRadioItem value="all">All Priorities</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="high">High</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="medium">Medium</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="low">Low</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <DropdownMenuRadioGroup value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <DropdownMenuItem className="font-semibold">Priority</DropdownMenuItem>
+                    <DropdownMenuRadioItem value="all">All Priorities</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="high">High</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="medium">Medium</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="low">Low</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
-                {sortDirection === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-                <span>Sort</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
-                <DropdownMenuItem className="font-semibold">Sort By</DropdownMenuItem>
-                <DropdownMenuRadioItem value="date">Date</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="priority">Priority</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    {sortDirection === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+                    <span>Sort</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuRadioGroup value={sortBy} onValueChange={setSortBy}>
+                    <DropdownMenuItem className="font-semibold">Sort By</DropdownMenuItem>
+                    <DropdownMenuRadioItem value="date">Date</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="priority">Priority</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="name">Name</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
 
-              <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
 
-              <DropdownMenuRadioGroup value={sortDirection} onValueChange={setSortDirection}>
-                <DropdownMenuItem className="font-semibold">Direction</DropdownMenuItem>
-                <DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <DropdownMenuRadioGroup value={sortDirection} onValueChange={setSortDirection}>
+                    <DropdownMenuItem className="font-semibold">Direction</DropdownMenuItem>
+                    <DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
         </div>
 
-        {showAddButton && (
-          <Button
-            onClick={() => setAddDialogOpen(true)}
-            size="sm"
-            className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Task
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {compactView && filteredAndSortedTasks.length > 0 && (
+            <Button
+              onClick={() => setClearAllDialogOpen(true)}
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              Clear All
+            </Button>
+          )}
+          
+          {showAddButton && (
+            <Button
+              onClick={() => setAddDialogOpen(true)}
+              size="sm"
+              className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Task
+            </Button>
+          )}
+        </div>
       </div>
 
       {filteredAndSortedTasks.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No tasks found for this period.</p>
+          <p className="text-muted-foreground">
+            {compactView ? "No completed tasks found for this period." : "No tasks found for this period."}
+          </p>
           {showAddButton && (
             <Button
               onClick={() => setAddDialogOpen(true)}
@@ -280,6 +315,50 @@ export function TaskList({ tasks = [], showAddButton = false }) {
           {filteredAndSortedTasks.map((task) => {
             const category = task.categoryId ? getTaskCategory(task.categoryId) : null
             const IconComponent = category && category.icon ? LucideIcons[category.icon] : null
+            const pointsEarned = task.customPoints || settings.pointsPerTask
+
+            if (compactView) {
+              return (
+                <div
+                  key={task.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm"
+                  style={{ borderLeft: `4px solid ${task.color || "#10b981"}` }}
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-sm truncate">
+                          {task.name}
+                        </h4>
+                        {category && IconComponent && (
+                          <div
+                            className="flex items-center justify-center h-4 w-4 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: `${category.color}20` }}
+                          >
+                            <IconComponent size={10} style={{ color: category.color }} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span>{format(new Date(task.date), "MMM d, yyyy")}</span>
+                        {category && (
+                          <span className="flex items-center gap-1">
+                            •<span style={{ color: category.color }}>{category.name}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      +{pointsEarned} pts
+                    </Badge>
+                  </div>
+                </div>
+              )
+            }
 
             return (
               <div
@@ -494,6 +573,23 @@ export function TaskList({ tasks = [], showAddButton = false }) {
             <AlertDialogCancel onClick={() => setFailConfirmOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmFailSwitch} className="bg-gray-600 hover:bg-gray-700">
               Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={clearAllDialogOpen} onOpenChange={setClearAllDialogOpen}>
+        <AlertDialogContent className="max-h-[90vh] overflow-y-auto my-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear All Completed Tasks?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all completed tasks from the past tab. Your earned points will be preserved at the global level. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setClearAllDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={clearAllCompletedTasks} className="bg-red-600 hover:bg-red-700">
+              Clear All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -84,10 +84,10 @@ export default function TasksPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Past Tasks</CardTitle>
-                <CardDescription>Tasks from previous days</CardDescription>
+                <CardDescription>Completed tasks from previous days</CardDescription>
               </CardHeader>
               <CardContent>
-                <TaskList tasks={pastTasks} />
+                <TaskList tasks={pastTasks} compactView={true} />
               </CardContent>
             </Card>
           </TabsContent>
