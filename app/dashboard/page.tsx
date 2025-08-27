@@ -104,8 +104,8 @@ export default function DashboardPage() {
 
       <main className="flex-1 container mx-auto p-3 sm:p-4 md:p-6">
         {/* Stats Cards - Mobile 2x2 Grid, Desktop 4-column */}
-        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4 lg:auto-rows-fr">
+          <Card className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm sm:text-lg md:text-xl flex items-center gap-1 sm:gap-2">
                 <Trophy className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+          <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm sm:text-lg md:text-xl flex items-center gap-1 sm:gap-2">
                 <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
@@ -147,8 +147,18 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           
+          <Card className="lg:col-span-2 col-span-2 lg:row-span-2">
+            <CardHeader>
+              <CardTitle className="text-lg sm:text-xl">Weekly Progress</CardTitle>
+              <CardDescription className="text-sm">Daily completion rates and weekly impact score</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DashboardChart habits={habits} tasks={tasks} />
+            </CardContent>
+          </Card>
 
-          <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+
+          <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm sm:text-lg md:text-xl flex items-center gap-1 sm:gap-2">
                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
@@ -171,7 +181,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-rose-500 to-pink-600 text-white">
+          <Card className="bg-gradient-to-br from-rose-500 to-pink-600 text-white h-full">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm sm:text-lg md:text-xl flex items-center gap-1 sm:gap-2">
                 <Clock className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5" />
@@ -292,16 +302,6 @@ export default function DashboardPage() {
 
         {/* Charts and Projects Section */}
         <div className="mt-4 sm:mt-6 grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Weekly Progress</CardTitle>
-              <CardDescription className="text-sm">Daily completion rates and weekly impact score</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DashboardChart habits={habits} tasks={tasks} />
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl">Active Projects</CardTitle>
