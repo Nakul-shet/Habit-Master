@@ -497,7 +497,7 @@ export function TaskList({ tasks = [], showAddButton = false, compactView = fals
       )}
 
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto my-4">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add New Task</DialogTitle>
             <DialogDescription>Create a new task to complete.</DialogDescription>
@@ -507,7 +507,7 @@ export function TaskList({ tasks = [], showAddButton = false, compactView = fals
       </Dialog>
 
       <Dialog open={!!editTask} onOpenChange={(open) => !open && setEditTask(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto my-4">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
             <DialogDescription>Make changes to your task.</DialogDescription>

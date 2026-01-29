@@ -222,7 +222,7 @@ export function HabitList({ showAddButton = false }) {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Add New Habit</DialogTitle>
             <DialogDescription>

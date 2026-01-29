@@ -138,21 +138,23 @@ export function TaskForm({ task, onSuccess }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Task Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Complete project report" {...field} />
-              </FormControl>
-              <FormDescription>What do you need to accomplish?</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
+        <div className="col-span-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Task Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Complete project report" {...field} />
+                </FormControl>
+                <FormDescription>What do you need to accomplish?</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -182,7 +184,7 @@ export function TaskForm({ task, onSuccess }) {
                   />
                 </PopoverContent>
               </Popover>
-              <FormDescription>When do you need to complete this task? (You can select future dates)</FormDescription>
+              <FormDescription>Due date</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -200,7 +202,7 @@ export function TaskForm({ task, onSuccess }) {
                     <FormControl>
                       <RadioGroupItem value="low" className="sr-only peer" />
                     </FormControl>
-                    <FormLabel className="cursor-pointer rounded-md border-2 border-transparent px-3 py-2 peer-data-[state=checked]:border-green-500 peer-data-[state=checked]:text-green-500 bg-green-100 text-green-700">
+                    <FormLabel className="cursor-pointer rounded-md border-2 border-transparent px-2 py-2 text-xs peer-data-[state=checked]:border-green-500 peer-data-[state=checked]:text-green-500 bg-green-100 text-green-700">
                       Low
                     </FormLabel>
                   </FormItem>
@@ -208,21 +210,21 @@ export function TaskForm({ task, onSuccess }) {
                     <FormControl>
                       <RadioGroupItem value="medium" className="sr-only peer" />
                     </FormControl>
-                    <FormLabel className="cursor-pointer rounded-md border-2 border-transparent px-3 py-2 peer-data-[state=checked]:border-yellow-500 peer-data-[state=checked]:text-yellow-500 bg-yellow-100 text-yellow-700">
-                      Medium
+                    <FormLabel className="cursor-pointer rounded-md border-2 border-transparent px-2 py-2 text-xs peer-data-[state=checked]:border-yellow-500 peer-data-[state=checked]:text-yellow-500 bg-yellow-100 text-yellow-700">
+                      Med
                     </FormLabel>
                   </FormItem>
                   <FormItem className="flex items-center space-x-1 space-y-0">
                     <FormControl>
                       <RadioGroupItem value="high" className="sr-only peer" />
                     </FormControl>
-                    <FormLabel className="cursor-pointer rounded-md border-2 border-transparent px-3 py-2 peer-data-[state=checked]:border-red-500 peer-data-[state=checked]:text-red-500 bg-red-100 text-red-700">
+                    <FormLabel className="cursor-pointer rounded-md border-2 border-transparent px-2 py-2 text-xs peer-data-[state=checked]:border-red-500 peer-data-[state=checked]:text-red-500 bg-red-100 text-red-700">
                       High
                     </FormLabel>
                   </FormItem>
                 </RadioGroup>
               </FormControl>
-              <FormDescription>Set the priority level for this task</FormDescription>
+              <FormDescription>Priority</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -238,7 +240,7 @@ export function TaskForm({ task, onSuccess }) {
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -260,14 +262,30 @@ export function TaskForm({ task, onSuccess }) {
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <FormDescription>Categorize your task for better organization</FormDescription>
+              <FormDescription>Category</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Custom Points Section */}
-        <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Color</FormLabel>
+              <FormControl>
+                <div className="flex items-center gap-2">
+                  <Input type="color" {...field} className="w-full h-10 p-1" />
+                </div>
+              </FormControl>
+              <FormDescription>Color</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="col-span-2 space-y-2">
           <div className="flex items-center justify-between">
             <FormLabel>Points</FormLabel>
             <div className="flex items-center space-x-2">
@@ -277,7 +295,7 @@ export function TaskForm({ task, onSuccess }) {
                 onCheckedChange={setUseCustomPoints}
               />
               <label htmlFor="useCustomPoints" className="text-sm text-muted-foreground">
-                Use custom points
+                Custom
               </label>
             </div>
           </div>
@@ -300,64 +318,45 @@ export function TaskForm({ task, onSuccess }) {
                         onChange={(e) => field.onChange(Number(e.target.value))}
                         className="flex-1"
                       />
-                      <span className="text-sm text-muted-foreground">points</span>
+                      <span className="text-sm text-muted-foreground">pts</span>
                     </div>
                   </FormControl>
-                  <FormDescription>
-                    Custom points for this task. Default is {settings.pointsPerTask} points.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
           ) : (
-            <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center space-x-2 p-2 bg-muted/50 rounded-lg">
               <Coins className="h-4 w-4 text-amber-500" />
               <span className="text-sm text-muted-foreground">
-                Default points: {settings.pointsPerTask} points
+                {settings.pointsPerTask} points
               </span>
             </div>
           )}
         </div>
 
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Task Color</FormLabel>
-              <FormControl>
-                <div className="flex items-center gap-2">
-                  <Input type="color" {...field} className="w-12 h-8 p-1" />
-                  <span className="text-sm">{field.value}</span>
+        <div className="col-span-2">
+            <FormField
+            control={form.control}
+            name="remember"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                    <FormLabel>Remember this task</FormLabel>
+                    <FormDescription>Add to unique records</FormDescription>
                 </div>
-              </FormControl>
-              <FormDescription>Choose a color to represent this task</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="remember"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Remember this task</FormLabel>
-                <FormDescription>Add this task to your unique records when completed</FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+                </FormItem>
+            )}
+            />
+        </div>
 
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700"
+          className="col-span-2 w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700"
         >
           {isSubmitting ? "Saving..." : task ? "Update Task" : "Create Task"}
         </Button>

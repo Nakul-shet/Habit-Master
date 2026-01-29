@@ -70,21 +70,23 @@ export function HabitForm({ habit, onSuccess }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Habit Name</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Drink water" {...field} />
-              </FormControl>
-              <FormDescription>Give your habit a clear, actionable name</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
+        <div className="col-span-2">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Habit Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Drink water" {...field} />
+                </FormControl>
+                <FormDescription>Give your habit a clear, actionable name</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -131,7 +133,7 @@ export function HabitForm({ habit, onSuccess }) {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+          className="col-span-2 w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
         >
           {isSubmitting ? "Saving..." : habit ? "Update Habit" : "Create Habit"}
         </Button>
